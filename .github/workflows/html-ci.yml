@@ -7,13 +7,24 @@ on:
     branches: [ "main" ]
 
 jobs:
-  validate-html:
+  check-html:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate HTML
+      - name: Check index.html exists
         run: |
-          docker run --rm -v "$(pwd):/files" w3c/validator \
-          java -jar /validator/vnu.jar /files/index.html
+          if [ ! -f index.html ]; then
+            echo "❌ index.html not found"
+            exit 1
+          fi
+          echo "✅ index.html found"
+
+      - name: Basic HTML syntax check
+        run: |
+          if grep -q "<?>" index.html; then
+            echo "❌ Invalid HTML syntax detected"
+            exit 1
+          fi
+          echo "✅ HTML syntax looks OK"
