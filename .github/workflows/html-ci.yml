@@ -7,17 +7,13 @@ on:
     branches: [ "main" ]
 
 jobs:
-  check-html:
+  validate-html:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Check index.html exists
+      - name: Validate HTML
         run: |
-          if [ ! -f index.html ]; then
-            echo "index.html not found"
-            exit 1
-          fi
-          echo "index.html found"
+          docker run --rm -v "$(pwd):/files" ghcr.io/validator/validator:vnu-alpine \
+          /files/index.html
