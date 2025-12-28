@@ -16,4 +16,4 @@ jobs:
       - name: Validate HTML
         run: |
           docker run --rm -v "$(pwd):/files" ghcr.io/validator/validator:latest \
-          /files/index.html
+          vnu /files/index.html
