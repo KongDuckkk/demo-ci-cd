@@ -7,24 +7,62 @@ on:
     branches: [ "main" ]
 
 jobs:
-  check-html:
+  html-syntax-check:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check index.html exists
+      - name: HTML syntax robot
         run: |
-          if [ ! -f index.html ]; then
+          FILE="index.html"
+
+          echo "🔍 Checking $FILE"
+
+          # 1. File must exist
+          if [ ! -f "$FILE" ]; then
             echo "❌ index.html not found"
             exit 1
           fi
-          echo "✅ index.html found"
 
-      - name: Basic HTML syntax check
-        run: |
-          if grep -q "<?>" index.html; then
-            echo "❌ Invalid HTML syntax detected"
+          # 2. DOCTYPE
+          if ! grep -iq "<!DOCTYPE html>" "$FILE"; then
+            echo "❌ Missing <!DOCTYPE html>"
             exit 1
           fi
-          echo "✅ HTML syntax looks OK"
+
+          # 3. html tag
+          if ! grep -iq "<html" "$FILE" || ! grep -iq "</html>" "$FILE"; then
+            echo "❌ <html> tag not properly closed"
+            exit 1
+          fi
+
+          # 4. body tag
+          if ! grep -iq "<body" "$FILE" || ! grep -iq "</body>" "$FILE"; then
+            echo "❌ <body> tag not properly closed"
+            exit 1
+          fi
+
+          # 5. Invalid comment
+          if grep -q "^-->" "$FILE"; then
+            echo "❌ Invalid HTML comment detected"
+            exit 1
+          fi
+
+          # 6. Invalid token
+          if grep -q "<?>" "$FILE"; then
+            echo "❌ Invalid token <?>"
+            exit 1
+          fi
+
+          # 7. Basic tag pairing check
+          for tag in h1 p title head; do
+            OPEN=$(grep -io "<$tag[^>]*>" "$FILE" | wc -l)
+            CLOSE=$(grep -io "</$tag>" "$FILE" | wc -l)
+            if [ "$OPEN" -ne "$CLOSE" ]; then
+              echo "❌ <$tag> tag not properly closed"
+              exit 1
+            fi
+          done
+
+          echo "✅ HTML syntax check PASSED"
